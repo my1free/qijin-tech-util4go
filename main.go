@@ -5,12 +5,10 @@ import (
 	"io/ioutil"
 	"time"
 	"github.com/kataras/iris/core/errors"
-		"net/http"
-	"github.com/google/uuid"
-	"encoding/base64"
-	"crypto/md5"
+							"strings"
 	"encoding/json"
-	"strings"
+	"git.inke.cn/BackendPlatform/golang/logging"
+	"git.inke.cn/gmu/server/common/toolbox/utils"
 )
 
 const (
@@ -47,20 +45,54 @@ type tweet struct {
 	Message string
 }
 
+type OriginText struct {
+	Timestamp int64  `json:"timestamp"`
+	Host      string `json:"host"`
+	Appkey    string `json:"appkey"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+	MsgID     string `json:"msg_id"`
+	ChatType  string `json:"chat_type"`
+	Payload   struct {
+		Ext    map[string]interface{} `json:"ext"`
+		Bodies []struct {
+			URL    string  `json:"url"`
+			Type   string  `json:"type"`
+			Msg    string  `json:"msg"`
+			Addr   string  `json:"addr"`
+			Lng    float64 `json:"lng"`
+			Lat    float64 `json:"lat"`
+			Length int     `json:"length"`
+			Size   struct {
+				Width  int `json:"width"`
+				Height int `json:"height"`
+			} `json:"size"`
+			Secret     string `json:"secret"`
+			Filename   string `json:"filename"`
+			FileLength int    `json:"file_length"`
+		} `json:"bodies"`
+	} `json:"payload"`
+	CallID    string `json:"callId"`
+	EventType string `json:"eventType"`
+	Security  string `json:"security"`
+}
+
 func main() {
-	s := time.Now().UTC().Format(http.TimeFormat)
-	fmt.Println(s)
+	currTime := "2020-02-02 02:02:10"
+	utils.StrToTime(currTime, utils.DefaultLayout).Unix()
+	originText:="{\"timestamp\":1580785500187,\"host\":\"msync@vip6-ali-beijing-msync-55\",\"appkey\":\"gmu#jimu\",\"from\":\"new_jimu_gmu_5351659\",\"to\":\"new_jimu_gmu_1\",\"msg_id\":\"701027569301981696\",\"chat_type\":\"chat\",\"payload\":{\"ext\":{\"msgtype\":{\"choice\":{\"menuid\":\"TransferToKf\"}},\"TrackId\":\"535165911580785500100\",\"HXFromUserVipStatus\":\"0\",\"HXFromUserSenderTime\":\"1580785500\",\"HXFromUserName\":\"Hey\",\"HXFromUserIntent\":\"103\",\"HXFromUserID\":\"5351659\",\"HXFromUserAvatar\":\"http:\\/\\/avatar.cdn.gmugmu.com\\/5351659_917537\",\"HXConversationId\":\"new_jimu_gmu_5351659new_jimu_gmu_1\"},\"bodies\":[{\"type\":\"txt\",\"msg\":\"\\u8f6c\\u4eba\\u5de5\\u5ba2\\u670d\"}]},\"callId\":\"gmu#jimu_701027569301981696\",\"eventType\":\"chat\",\"security\":\"8aa8bf0db2b9b26117a4e96862d547e9\"}"
 
-	fmt.Println(uuid.New().String())
-
-	body := make(map[string]interface{})
-	body["asdf"] = "asdf"
-	bodyB, _ := json.Marshal(body)
-	fmt.Println(base64.StdEncoding.EncodeToString(md5.New().Sum(bodyB)))
-
-	fmt.Println(IsBlank(" s "))
-	fmt.Println(IsBlank(""))
-	fmt.Println(IsBlank("  "))
+	originTextS := new(OriginText)
+	if err := json.Unmarshal([]byte(originText), originTextS); err != nil {
+		logging.Errorf("unmarshal originText error | originText=%s | err=%+v", originText, err)
+	}
+	payload := originTextS.Payload
+	ext := payload.Ext
+	trackId := ext["TrackId"].(string)
+	fmt.Println(originTextS)
+	fmt.Println(payload)
+	fmt.Println(ext)
+	fmt.Println(trackId)
 
 }
 
